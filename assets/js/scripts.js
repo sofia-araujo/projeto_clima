@@ -1,7 +1,31 @@
 const API_BASE_URL = 'https://geocoding-api.open-meteo.com/v1/search';
 const WEATHER_API_URL = 'https://api.open-meteo.com/v1/forecast';
 
-// Busca latitude/longitude e retorna um objeto com lat, lon, name e country
+/**
+ * Busca as coordenadas geográficas de uma cidade usando a API de geocodificação Open-Meteo.
+ * 
+ * @async
+ * @function getCityCoordinates
+ * @param {string} cityName - Nome da cidade a ser buscada (obrigatório, não vazio).
+ * @returns {Promise<Object>} Objeto contendo as coordenadas e informações da cidade.
+ * @returns {number} return.lat - Latitude da cidade.
+ * @returns {number} return.lon - Longitude da cidade.
+ * @returns {string} return.name - Nome oficial da cidade retornado pela API.
+ * @returns {string} return.country - País onde a cidade se localiza.
+ * 
+ * @throws {Error} Lança erro se o nome da cidade estiver vazio ou não tiver sido fornecido.
+ * @throws {Error} Lança erro se a resposta da API não for bem-sucedida (status !ok).
+ * @throws {Error} Lança erro se nenhum resultado foi encontrado para a cidade informada.
+ * 
+ * @example
+ * try {
+ *   const coords = await getCityCoordinates('São Paulo');
+ *   console.log(coords);
+ *   // Output: { lat: -23.5505, lon: -46.6333, name: 'São Paulo', country: 'Brasil' }
+ * } catch (err) {
+ *   console.error(err.message); // ex: 'Cidade não encontrada'
+ * }
+ */
 async function getCityCoordinates(cityName) {
     if (!cityName || !cityName.trim()) {
         throw new Error('Nome da cidade é obrigatório');
@@ -15,7 +39,30 @@ async function getCityCoordinates(cityName) {
     return { lat: r.latitude, lon: r.longitude, name: r.name, country: r.country };
 }
 
-// Busca o clima atual via Open-Meteo (current_weather)
+/**
+ * Busca os dados do clima atual de uma localização usando a API de previsão Open-Meteo.
+ * 
+ * @async
+ * @function getWeatherData
+ * @param {number} lat - Latitude da localização (requerida).
+ * @param {number} lon - Longitude da localização (requerida).
+ * @returns {Promise<Object|null>} Objeto com os dados do clima atual ou null se indisponível.
+ * @returns {number} return.temperature - Temperatura atual em graus Celsius.
+ * @returns {number} return.weathercode - Código WMO do tipo de tempo (ex: 0 = céu limpo, 80 = chuva).
+ * @returns {string} return.time - Data e hora no formato ISO (ex: '2025-11-10T14:30').
+ * @returns {number} return.windspeed - Velocidade do vento em km/h.
+ * 
+ * @throws {Error} Lança erro se a resposta da API não for bem-sucedida (status !ok).
+ * 
+ * @example
+ * try {
+ *   const weather = await getWeatherData(-23.5505, -46.6333);
+ *   console.log(weather);
+ *   // Output: { temperature: 25, weathercode: 1, time: '2025-11-10T14:30', windspeed: 8 }
+ * } catch (err) {
+ *   console.error(err.message); // ex: 'Erro ao buscar dados do clima'
+ * }
+ */
 async function getWeatherData(lat, lon) {
     const params = new URLSearchParams({ latitude: lat, longitude: lon, current_weather: 'true', timezone: 'auto' });
     const res = await fetch(`${WEATHER_API_URL}?${params}`);
@@ -25,6 +72,20 @@ async function getWeatherData(lat, lon) {
     return data.current_weather || null;
 }
 
+/**
+ * Converte um código WMO de tipo de tempo em uma descrição textual em português.
+ * 
+ * @function getWeatherDescription
+ * @param {number} code - Código WMO do tipo de tempo (ex: 0 = céu limpo, 80 = chuva leve).
+ * @returns {string} Descrição em português do tipo de tempo. Retorna 'Condição desconhecida' se o código não for mapeado.
+ * 
+ * @example
+ * const desc = getWeatherDescription(80);
+ * console.log(desc); // Output: 'Pancadas de chuva leves'
+ * 
+ * const unknown = getWeatherDescription(999);
+ * console.log(unknown); // Output: 'Condição desconhecida'
+ */
 function getWeatherDescription(code) {
     const map = {
         0: 'Céu limpo',
@@ -55,6 +116,21 @@ function getWeatherDescription(code) {
     return map[code] || 'Condição desconhecida';
 }
 
+/**
+ * Converte um código WMO de tipo de tempo em uma classe de ícone da biblioteca Weather Icons.
+ * 
+ * @function getWeatherIcon
+ * @param {number} code - Código WMO do tipo de tempo (ex: 0 = céu limpo, 80 = chuva leve).
+ * @returns {string} Classe CSS do ícone Weather Icons correspondente (ex: 'wi-rain', 'wi-snow').
+ *                   Retorna 'wi-na' (não disponível) se o código não for mapeado.
+ * 
+ * @example
+ * const iconClass = getWeatherIcon(80);
+ * console.log(iconClass); // Output: 'wi-rain'
+ * 
+ * // Uso prático no HTML:
+ * // <i class="wi weather-icon wi-rain"></i>
+ */
 function getWeatherIcon(code) {
     // Map weather codes to weather-icons classes
     // Reference: Open-Meteo weather codes
@@ -70,6 +146,21 @@ function getWeatherIcon(code) {
     return 'wi-na';
 }
 
+/**
+ * Formata uma string de data/hora ISO em formato legível em português brasileiro (DD/MM/YYYY HH:MM).
+ * 
+ * @function formatDateTimeLocal
+ * @param {string} isoString - String de data/hora no formato ISO (ex: '2025-11-10T14:30' ou '2025-11-10T14:30:45').
+ *                             Se vazio ou inválido, retorna a data/hora atual formatada.
+ * @returns {string} Data e hora formatadas no padrão brasileiro (ex: '10/11/2025 14:30').
+ * 
+ * @example
+ * const formatted = formatDateTimeLocal('2025-11-10T14:30');
+ * console.log(formatted); // Output: '10/11/2025 14:30'
+ * 
+ * const current = formatDateTimeLocal('');
+ * console.log(current); // Output: (data/hora atual formatada, ex: '10/11/2025 15:45')
+ */
 function formatDateTimeLocal(isoString) {
     // isoString expected like 'YYYY-MM-DDTHH:MM' or 'YYYY-MM-DDTHH:MM:SS'
     if (!isoString) return new Date().toLocaleString('pt-BR');
