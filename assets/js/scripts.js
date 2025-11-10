@@ -3,6 +3,9 @@ const WEATHER_API_URL = 'https://api.open-meteo.com/v1/forecast';
 
 // Busca latitude/longitude e retorna um objeto com lat, lon, name e country
 async function getCityCoordinates(cityName) {
+    if (!cityName || !cityName.trim()) {
+        throw new Error('Nome da cidade é obrigatório');
+    }
     const url = `${API_BASE_URL}?name=${encodeURIComponent(cityName)}&count=1&language=pt&format=json`;
     const res = await fetch(url);
     if (!res.ok) throw new Error('Erro ao buscar coordenadas da cidade');
@@ -90,131 +93,146 @@ function formatDateTimeLocal(isoString) {
     }
 }
 
-// Interface
-const searchForm = document.getElementById('searchForm');
-const cityInput = document.getElementById('cityInput');
-const searchBtn = document.getElementById('searchBtn');
-const loading = document.getElementById('loading');
-const error = document.getElementById('error');
-const weatherInfo = document.getElementById('weatherInfo');
-const backBtn = document.getElementById('backBtn');
-// referenciar o título principal para mostrar/ocultar quando necessário
-const pageTitle = document.querySelector('h1');
-// container pai para alternar visual (remover background quando mostrar apenas o painel)
-const container = document.querySelector('.container');
+// Run browser-only interface code only when DOM is available
+if (typeof window !== 'undefined' && typeof document !== 'undefined') {
+    // Interface
+    const searchForm = document.getElementById('searchForm');
+    const cityInput = document.getElementById('cityInput');
+    const searchBtn = document.getElementById('searchBtn');
+    const loading = document.getElementById('loading');
+    const error = document.getElementById('error');
+    const weatherInfo = document.getElementById('weatherInfo');
+    const backBtn = document.getElementById('backBtn');
+    // referenciar o título principal para mostrar/ocultar quando necessário
+    const pageTitle = document.querySelector('h1');
+    // container pai para alternar visual (remover background quando mostrar apenas o painel)
+    const container = document.querySelector('.container');
 
-// Função para mostrar o formulário de busca
-function showSearchForm() {
-    searchForm.style.display = 'flex';
-    weatherInfo.style.display = 'none';
-    error.style.display = 'none';
-    cityInput.value = '';
-    // ao mostrar o formulário, exibir o título
-    if (pageTitle) pageTitle.style.display = 'block';
-    // restaurar visual do container pai
-    if (container) container.classList.remove('no-bg');
-}
-
-// Função para esconder o formulário de busca
-function hideSearchForm() {
-    searchForm.style.display = 'none';
-}
-
-// Evento de clique no botão voltar
-if (backBtn) backBtn.addEventListener('click', showSearchForm);
-
-searchForm.addEventListener('submit', async (e) => {
-    e.preventDefault();
-    
-    const cityName = cityInput.value.trim();
-    
-    if (!cityName) {
-        return;
+    // Função para mostrar o formulário de busca
+    function showSearchForm() {
+        searchForm.style.display = 'flex';
+        weatherInfo.style.display = 'none';
+        error.style.display = 'none';
+        cityInput.value = '';
+        // ao mostrar o formulário, exibir o título
+        if (pageTitle) pageTitle.style.display = 'block';
+        // restaurar visual do container pai
+        if (container) container.classList.remove('no-bg');
     }
 
-    // Limpar estados anteriores
-    error.style.display = 'none';
-    weatherInfo.style.display = 'none';
-    loading.style.display = 'block';
-    searchBtn.disabled = true;
+    // Função para esconder o formulário de busca
+    function hideSearchForm() {
+        searchForm.style.display = 'none';
+    }
 
-    try {
-        // Buscar coordenadas da cidade
-        const cityData = await getCityCoordinates(cityName);
+    // Evento de clique no botão voltar
+    if (backBtn) backBtn.addEventListener('click', showSearchForm);
 
-        // Buscar dados do clima (current_weather)
-        const weather = await getWeatherData(cityData.lat, cityData.lon);
-        if (!weather) throw new Error('Dados de clima indisponíveis');
-
-        // Exibir resultados solicitados: cidade, país, temperatura e descrição
-        const cityEl = document.getElementById('cityName');
-        const tempEl = document.getElementById('temperature');
-        const desc = getWeatherDescription(weather.weathercode);
-
-        if (cityEl) cityEl.textContent = `${cityData.name}, ${cityData.country}`;
-        if (tempEl) tempEl.textContent = `${Math.round(weather.temperature)}°C`;
-
-        // criar/atualizar elemento de descrição (se existir no HTML, caso contrário criamos)
-        let descEl = document.getElementById('description');
-        if (!descEl) {
-            descEl = document.createElement('div');
-            descEl.id = 'description';
-            descEl.className = 'weather-description';
-            const current = document.querySelector('.current-weather');
-            if (current) current.appendChild(descEl);
+    searchForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const cityName = cityInput.value.trim();
+        
+        if (!cityName) {
+            return;
         }
-        descEl.textContent = desc;
 
-        // mostrar data/hora da consulta (usando o campo time retornado por Open-Meteo)
-        let datetimeEl = document.getElementById('datetime');
-        const formatted = formatDateTimeLocal(weather.time);
-        if (!datetimeEl) {
-            datetimeEl = document.createElement('div');
-            datetimeEl.id = 'datetime';
-            datetimeEl.className = 'datetime';
-            if (cityEl && cityEl.parentNode) {
-                // inserir logo após o elemento cityEl
-                cityEl.insertAdjacentElement('afterend', datetimeEl);
-            } else {
-                const info = document.getElementById('weatherInfo');
-                if (info) info.insertBefore(datetimeEl, info.firstChild);
+        // Limpar estados anteriores
+        error.style.display = 'none';
+        weatherInfo.style.display = 'none';
+        loading.style.display = 'block';
+        searchBtn.disabled = true;
+
+        try {
+            // Buscar coordenadas da cidade
+            const cityData = await getCityCoordinates(cityName);
+
+            // Buscar dados do clima (current_weather)
+            const weather = await getWeatherData(cityData.lat, cityData.lon);
+            if (!weather) throw new Error('Dados de clima indisponíveis');
+
+            // Exibir resultados solicitados: cidade, país, temperatura e descrição
+            const cityEl = document.getElementById('cityName');
+            const tempEl = document.getElementById('temperature');
+            const desc = getWeatherDescription(weather.weathercode);
+
+            if (cityEl) cityEl.textContent = `${cityData.name}, ${cityData.country}`;
+            if (tempEl) tempEl.textContent = `${Math.round(weather.temperature)}°C`;
+
+            // criar/atualizar elemento de descrição (se existir no HTML, caso contrário criamos)
+            let descEl = document.getElementById('description');
+            if (!descEl) {
+                descEl = document.createElement('div');
+                descEl.id = 'description';
+                descEl.className = 'weather-description';
+                const current = document.querySelector('.current-weather');
+                if (current) current.appendChild(descEl);
             }
-        }
-        datetimeEl.textContent = `Atualizado em: ${formatted}`;
+            descEl.textContent = desc;
 
-        // atualizar ou criar ícone de clima usando weather-icons
-        let iconEl = document.getElementById('weatherIcon');
-        const iconClass = getWeatherIcon(weather.weathercode);
-        if (!iconEl) {
-            iconEl = document.createElement('i');
-            iconEl.id = 'weatherIcon';
-            iconEl.className = `wi weather-icon ${iconClass}`;
-            const current = document.querySelector('.current-weather');
-            if (current) current.insertBefore(iconEl, current.firstChild);
-        } else {
-            // substituir classes preservando 'wi' e 'weather-icon'
-            iconEl.className = `wi weather-icon ${iconClass}`;
-        }
+            // mostrar data/hora da consulta (usando o campo time retornado por Open-Meteo)
+            let datetimeEl = document.getElementById('datetime');
+            const formatted = formatDateTimeLocal(weather.time);
+            if (!datetimeEl) {
+                datetimeEl = document.createElement('div');
+                datetimeEl.id = 'datetime';
+                datetimeEl.className = 'datetime';
+                if (cityEl && cityEl.parentNode) {
+                    // inserir logo após o elemento cityEl
+                    cityEl.insertAdjacentElement('afterend', datetimeEl);
+                } else {
+                    const info = document.getElementById('weatherInfo');
+                    if (info) info.insertBefore(datetimeEl, info.firstChild);
+                }
+            }
+            datetimeEl.textContent = `Atualizado em: ${formatted}`;
 
-        loading.style.display = 'none';
-        weatherInfo.style.display = 'block';
-        // esconder título ao mostrar as informações
-        if (pageTitle) pageTitle.style.display = 'none';
-    // tornar o container pai visualmente invisível (manter layout)
-    if (container) container.classList.add('no-bg');
-        hideSearchForm();
+            // atualizar ou criar ícone de clima usando weather-icons
+            let iconEl = document.getElementById('weatherIcon');
+            const iconClass = getWeatherIcon(weather.weathercode);
+            if (!iconEl) {
+                iconEl = document.createElement('i');
+                iconEl.id = 'weatherIcon';
+                iconEl.className = `wi weather-icon ${iconClass}`;
+                const current = document.querySelector('.current-weather');
+                if (current) current.insertBefore(iconEl, current.firstChild);
+            } else {
+                // substituir classes preservando 'wi' e 'weather-icon'
+                iconEl.className = `wi weather-icon ${iconClass}`;
+            }
 
-    } catch (err) {
-        loading.style.display = 'none';
-        // Mostrar mensagem específica quando a cidade não for encontrada
-        let message = 'Cidade não encontrada. Tente novamente.';
-        if (err && err.message && !err.message.toLowerCase().includes('cidade')) {
-            // para outros erros, mostramos a mensagem original ou fallback
-            message = err.message || 'Erro ao buscar dados do clima. Tente novamente.';
+            loading.style.display = 'none';
+            weatherInfo.style.display = 'block';
+            // esconder título ao mostrar as informações
+            if (pageTitle) pageTitle.style.display = 'none';
+            // tornar o container pai visualmente invisível (manter layout)
+            if (container) container.classList.add('no-bg');
+            hideSearchForm();
+
+        } catch (err) {
+            loading.style.display = 'none';
+            // Mostrar mensagem específica quando a cidade não for encontrada
+            let message = 'Cidade não encontrada. Tente novamente.';
+            if (err && err.message && !err.message.toLowerCase().includes('cidade')) {
+                // para outros erros, mostramos a mensagem original ou fallback
+                message = err.message || 'Erro ao buscar dados do clima. Tente novamente.';
+            }
+            error.textContent = message;
+            error.style.display = 'block';
+        } finally {
+            searchBtn.disabled = false;
         }
-        error.textContent = message;
-        error.style.display = 'block';
-    } finally {
-        searchBtn.disabled = false;
-    }
-});
+    });
+
+}
+
+// Export functions for unit tests (Node environment)
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+        getCityCoordinates,
+        getWeatherData,
+        getWeatherDescription,
+        getWeatherIcon,
+        formatDateTimeLocal
+    };
+}
