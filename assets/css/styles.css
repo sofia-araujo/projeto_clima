@@ -16,14 +16,26 @@ body {
 }
 
 .container {
-    background: rgba(255, 255, 255, 0.1);
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    /* vidro com transparência maior (mais translúcido) para menos escuro */
+    background: rgba(8, 12, 15, 0.28);
+    -webkit-backdrop-filter: blur(10px) saturate(110%);
+    backdrop-filter: blur(10px) saturate(110%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 20px;
     padding: 40px;
-    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
     max-width: 500px;
     width: 100%;
+}
+
+/* quando queremos esconder o visual do container pai (manter estrutura/layout mas sem fundo)
+   aplicação usada quando o painel de weather-info está em foco */
+.container.no-bg {
+    background: transparent !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+    border: none !important;
+    box-shadow: none !important;
 }
 
 h1 {
@@ -102,15 +114,15 @@ h1 {
 }
 
 .weather-info {
-    /* inicialmente escondido; quando visível, terá efeito vidro */
+    /* painel de informações com vidro escuro para contraste */
     display: none;
-    background: rgba(255, 255, 255, 0.06);
-    -webkit-backdrop-filter: blur(8px) saturate(120%);
-    backdrop-filter: blur(8px) saturate(120%);
-    border: 1px solid rgba(255, 255, 255, 0.16);
+    background: rgba(6, 10, 14, 0.22);
+    -webkit-backdrop-filter: blur(8px) saturate(105%);
+    backdrop-filter: blur(8px) saturate(105%);
+    border: 1px solid rgba(255, 255, 255, 0.06);
     border-radius: 16px;
     padding: 20px;
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8px 28px rgba(0, 0, 0, 0.28);
     position: relative;
     color: white;
 }
@@ -120,9 +132,9 @@ h1 {
     content: "";
     position: absolute;
     inset: 0;
-    background-image: radial-gradient(rgba(255,255,255,0.04) 1px, transparent 1px);
+    background-image: radial-gradient(rgba(255,255,255,0.02) 1px, transparent 1px);
     background-size: 6px 8px;
-    opacity: 0.22;
+    opacity: 0.08;
     border-radius: inherit;
     pointer-events: none;
     mix-blend-mode: overlay;
@@ -136,6 +148,14 @@ h1 {
     text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.35), 0 0 6px rgba(47,160,122,0.08);
 }
 
+.datetime {
+    text-align: center;
+    font-size: 0.95em;
+    color: rgba(240,255,246,0.95);
+    margin: 6px 0 12px;
+    text-shadow: 0 2px 6px rgba(0,0,0,0.25);
+}
+
 .current-weather {
     background: transparent; /* conteúdo interno fica sem fundo para unificar com .weather-info */
     color: white;
@@ -143,6 +163,12 @@ h1 {
     border-radius: 15px;
     text-align: center;
     margin-bottom: 20px;
+}
+
+.weather-icon {
+    display: block;
+    font-size: 3.2rem;
+    margin: 0 auto 6px;
 }
 
 .temperature {

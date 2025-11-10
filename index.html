@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Previsão do Tempo</title>
     <link rel="stylesheet" href="/assets/css/styles.css">
+    <!-- Weather icons library (Wind, rain, clouds, etc.) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css">
 </head>
 <body>
     <div class="container">
@@ -27,6 +29,7 @@
             <h2 class="city-name" id="cityName"></h2>
             
             <div class="current-weather">
+                <i id="weatherIcon" class="wi weather-icon" aria-hidden="true"></i>
                 <div class="temperature" id="temperature"></div>
             </div>
             <button id="backBtn" class="back-button">Voltar</button>
