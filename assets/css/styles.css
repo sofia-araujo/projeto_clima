@@ -150,9 +150,9 @@ h1 {
 
 .datetime {
     text-align: center;
-    font-size: 0.95em;
-    color: rgba(240,255,246,0.95);
-    margin: 6px 0 12px;
+    font-size: 0.9rem;
+    color: rgba(240,255,246,0.9);
+    margin: 12px 0 0;
     text-shadow: 0 2px 6px rgba(0,0,0,0.25);
 }
 
@@ -255,3 +255,159 @@ h1 {
         width: 100%;
     }
 }
+
+/* Forecast 5-day styles */
+.forecast-5day {
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.04);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+.forecast-5day h3 {
+    color: #eafff0;
+    font-size: 1.05em;
+    margin-bottom: 8px;
+    text-align: left;
+}
+.forecast-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+.forecast-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 10px;
+    border-radius: 8px;
+    background: rgba(255,255,255,0.02);
+    color: #e8fff5;
+    font-weight: 600;
+    font-size: 0.95em;
+}
+.forecast-item small {
+    font-weight: 400;
+    color: rgba(235,255,245,0.85);
+}
+
+/* ícone da previsão (substitui o traço) */
+.forecast-icon {
+    font-size: 1.25rem;
+    margin-right: 10px;
+    color: #cffff0; /* tom claro esverdeado */
+    width: 28px;
+    text-align: center;
+}
+.forecast-text {
+    flex: 1;
+    font-size: 1.05rem; /* aumentar fonte do campo conforme solicitado */
+    font-weight: 700;
+}
+
+/* Forecast 5-day layout: left=weekday/date, center=icon+desc centered, right=max/min stacked */
+.forecast-5day {
+    margin-top: 12px;
+    padding: 12px 14px;
+    background: rgba(255,255,255,0.03);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.04);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+}
+
+.forecast-title {
+    color: #eafff0;
+    font-size: 1.15rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    text-align: center;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+.forecast-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.forecast-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.02);
+    color: #e8fff5;
+    font-weight: 600;
+    font-size: 0.95em;
+}
+
+.forecast-left {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 100px;
+    text-align: left;
+}
+
+.forecast-weekday {
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #eafff0;
+}
+
+.forecast-date {
+    font-size: 0.9rem;
+    color: rgba(235,255,245,0.9);
+}
+
+.forecast-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    flex: 1;
+    text-align: center;
+    padding: 0 16px;
+}
+
+.forecast-icon {
+    font-size: 2rem;
+    color: #cffff0;
+    width: 44px;
+    text-align: center;
+    display: block;
+}
+
+.forecast-desc {
+    font-size: 0.85rem;
+    color: rgba(235,255,245,0.95);
+    line-height: 1.2;
+    max-width: 110px;
+    word-wrap: break-word;
+}
+
+.forecast-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 4px;
+    min-width: 65px;
+    text-align: right;
+}
+
+.temp-max {
+    font-size: 1.1rem;
+    font-weight: 800;
+    color: #f0fff6;
+}
+
+.temp-min {
+    font-size: 0.95rem;
+    color: rgba(240,255,246,0.85);
+}
+

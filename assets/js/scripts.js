@@ -73,6 +73,54 @@ async function getWeatherData(lat, lon) {
 }
 
 /**
+ * Obtém a previsão diária para os próximos 5 dias (incluindo o dia atual) usando a API Open-Meteo.
+ *
+ * @async
+ * @function get5DayForecast
+ * @param {number} lat - Latitude da localização (requerida).
+ * @param {number} lon - Longitude da localização (requerida).
+ * @returns {Promise<Object|null>} Objeto `daily` retornado pela API contendo arrays com as datas e valores:
+ *  - `time` (string[]) - datas no formato 'YYYY-MM-DD'
+ *  - `temperature_2m_max` (number[]) - temperatura máxima diária em °C
+ *  - `temperature_2m_min` (number[]) - temperatura mínima diária em °C
+ *  - `weathercode` (number[]) - códigos WMO para o tipo de tempo de cada dia
+ *  Retorna `null` se a propriedade `daily` não estiver presente na resposta.
+ *
+ * @throws {Error} Lança erro se a resposta da API não for bem-sucedida (status !ok).
+ *
+ * @example
+ * try {
+ *   const forecast = await get5DayForecast(-23.5505, -46.6333);
+ *   // forecast.time => ['2025-11-10','2025-11-11', ...]
+ *   // forecast.temperature_2m_max => [26, 27, ...]
+ * } catch (err) {
+ *   console.error(err.message);
+ * }
+ */
+async function get5DayForecast(lat, lon) {
+    // calcula as datas de início e fim (5 dias incluindo hoje)
+    const today = new Date();
+    const startDate = today.toISOString().slice(0, 10);
+    const end = new Date(today);
+    end.setDate(end.getDate() + 4); // +4 para totalizar 5 dias (hoje + 4 dias seguintes)
+    const endDate = end.toISOString().slice(0, 10);
+
+    const params = new URLSearchParams({
+        latitude: lat,
+        longitude: lon,
+        daily: 'temperature_2m_max,temperature_2m_min,weathercode',
+        timezone: 'auto',
+        start_date: startDate,
+        end_date: endDate
+    });
+
+    const res = await fetch(`${WEATHER_API_URL}?${params}`);
+    if (!res.ok) throw new Error('Erro ao buscar previsão de 5 dias');
+    const data = await res.json();
+    return data.daily || null;
+}
+
+/**
  * Converte um código WMO de tipo de tempo em uma descrição textual em português.
  * 
  * @function getWeatherDescription
@@ -268,15 +316,16 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
                 datetimeEl = document.createElement('div');
                 datetimeEl.id = 'datetime';
                 datetimeEl.className = 'datetime';
-                if (cityEl && cityEl.parentNode) {
-                    // inserir logo após o elemento cityEl
-                    cityEl.insertAdjacentElement('afterend', datetimeEl);
+                // inserir após a descrição do clima
+                let descEl = document.getElementById('description');
+                if (descEl && descEl.parentNode) {
+                    descEl.insertAdjacentElement('afterend', datetimeEl);
                 } else {
-                    const info = document.getElementById('weatherInfo');
-                    if (info) info.insertBefore(datetimeEl, info.firstChild);
+                    const current = document.querySelector('.current-weather');
+                    if (current) current.appendChild(datetimeEl);
                 }
             }
-            datetimeEl.textContent = `Atualizado em: ${formatted}`;
+            datetimeEl.textContent = `${formatted}`;
 
             // atualizar ou criar ícone de clima usando weather-icons
             let iconEl = document.getElementById('weatherIcon');
@@ -290,6 +339,104 @@ if (typeof window !== 'undefined' && typeof document !== 'undefined') {
             } else {
                 // substituir classes preservando 'wi' e 'weather-icon'
                 iconEl.className = `wi weather-icon ${iconClass}`;
+            }
+
+            // Obter e exibir previsão dos próximos 5 dias (inclui hoje)
+            try {
+                const daily = await get5DayForecast(cityData.lat, cityData.lon);
+                // criar ou limpar container de forecast
+                let forecastEl = document.getElementById('forecast5');
+                if (!forecastEl) {
+                    forecastEl = document.createElement('div');
+                    forecastEl.id = 'forecast5';
+                    forecastEl.className = 'forecast-5day';
+                    const info = document.getElementById('weatherInfo');
+                    const backButtonEl = document.getElementById('backBtn');
+                    // preferir inserir a previsão antes do botão "Voltar" para melhor organização
+                    if (info && backButtonEl && backButtonEl.parentNode === info) {
+                        info.insertBefore(forecastEl, backButtonEl);
+                    } else if (info) {
+                        info.appendChild(forecastEl);
+                    }
+                } else {
+                    forecastEl.innerHTML = '';
+                }
+
+                if (daily && Array.isArray(daily.time) && daily.time.length) {
+                    // Adicionar título "Próximos dias"
+                    const titleEl = document.createElement('h3');
+                    titleEl.className = 'forecast-title';
+                    titleEl.textContent = 'Próximos dias';
+                    forecastEl.appendChild(titleEl);
+
+                    const list = document.createElement('ul');
+                    list.className = 'forecast-list';
+                    for (let i = 0; i < daily.time.length; i++) {
+                            const isoDate = daily.time[i]; // 'YYYY-MM-DD'
+                            const [yy, mm, dd] = isoDate.split('-');
+                            const formattedDate = `${dd}/${mm}/${yy}`;
+                            // obter dia da semana em português (seg, ter, ...)
+                            const dateObj = new Date(Number(yy), Number(mm) - 1, Number(dd));
+                            const weekdays = ['domingo', 'segunda-feira', 'terça-feira', 'quarta-feira', 'quinta-feira', 'sexta-feira', 'sábado'];
+                            const weekday = weekdays[dateObj.getDay()];
+                            // converter para PascalCase (ex: 'segunda-feira' -> 'SegundaFeira')
+                            const partsForPascal = weekday.split(/[^A-Za-zÀ-ÖØ-öø-ÿ0-9]+/);
+                            const weekdayPascal = partsForPascal.map(p => p ? (p.charAt(0).toLocaleUpperCase('pt-BR') + p.slice(1)) : '').join(' ');
+                        const tmin = Math.round(daily.temperature_2m_min[i]);
+                        const tmax = Math.round(daily.temperature_2m_max[i]);
+                        const li = document.createElement('li');
+                        li.className = 'forecast-item';
+
+                        // Left: weekday above date
+                        const left = document.createElement('div');
+                        left.className = 'forecast-left';
+                        const wd = document.createElement('div');
+                        wd.className = 'forecast-weekday';
+                        wd.textContent = weekdayPascal;
+                        const dt = document.createElement('div');
+                        dt.className = 'forecast-date';
+                        dt.textContent = formattedDate;
+                        left.appendChild(wd);
+                        left.appendChild(dt);
+
+                        // Center: icon + description
+                        const center = document.createElement('div');
+                        center.className = 'forecast-center';
+                        const code = Array.isArray(daily.weathercode) ? daily.weathercode[i] : null;
+                        const iconClass = (typeof getWeatherIcon === 'function' && code !== null) ? getWeatherIcon(code) : 'wi-na';
+                        const iconEl = document.createElement('i');
+                        iconEl.className = `wi forecast-icon ${iconClass}`;
+                        iconEl.setAttribute('aria-hidden', 'true');
+                        const descElDay = document.createElement('div');
+                        descElDay.className = 'forecast-desc';
+                        descElDay.textContent = getWeatherDescription(code);
+                        center.appendChild(iconEl);
+                        center.appendChild(descElDay);
+
+                        // Right: max above min (stacked)
+                        const right = document.createElement('div');
+                        right.className = 'forecast-right';
+                        const maxEl = document.createElement('div');
+                        maxEl.className = 'temp-max';
+                        maxEl.textContent = `${tmax}°C`;
+                        const minEl = document.createElement('div');
+                        minEl.className = 'temp-min';
+                        minEl.textContent = `${tmin}°C`;
+                        right.appendChild(maxEl);
+                        right.appendChild(minEl);
+
+                        // assemble
+                        li.appendChild(left);
+                        li.appendChild(center);
+                        li.appendChild(right);
+                        list.appendChild(li);
+                    }
+                    forecastEl.appendChild(list);
+                }
+            } catch (e) {
+                // não interrompe exibição principal; loga em console para debug
+                // eslint-disable-next-line no-console
+                console.warn('Erro ao obter previsão de 5 dias', e);
             }
 
             loading.style.display = 'none';
@@ -324,6 +471,7 @@ if (typeof module !== 'undefined' && module.exports) {
         getWeatherData,
         getWeatherDescription,
         getWeatherIcon,
-        formatDateTimeLocal
+        formatDateTimeLocal,
+        get5DayForecast
     };
 }
